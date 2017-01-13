@@ -208,6 +208,8 @@ namespace Mono.Cecil {
 #if !PCL && !NET_CORE
 		SR.StrongNameKeyPair key_pair;
 #endif
+		bool deterministic;
+
 		public Stream SymbolStream {
 			get { return symbol_stream; }
 			set { symbol_stream = value; }
@@ -228,6 +230,11 @@ namespace Mono.Cecil {
 			set { key_pair = value; }
 		}
 #endif
+
+		public bool Deterministic {
+			get { return deterministic; }
+			set { deterministic = value; }
+		}
 	}
 
 #endif

@@ -26,6 +26,7 @@ namespace Mono.Cecil.PE {
 		public ModuleKind Kind;
 		public string RuntimeVersion;
 		public TargetArchitecture Architecture;
+		public uint TimeDateStamp;
 		public ModuleCharacteristics Characteristics;
 
 		public Section [] Sections;

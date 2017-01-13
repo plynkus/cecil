@@ -104,7 +104,7 @@ namespace Mono.Cecil {
 			}
 #endif
 
-			var metadata = new MetadataBuilder (module, fq_name, symbol_writer_provider, symbol_writer);
+			var metadata = new MetadataBuilder (module, fq_name, symbol_writer_provider, symbol_writer, parameters.Deterministic);
 
 			BuildMetadata (module, metadata);
 
@@ -861,12 +861,19 @@ namespace Mono.Cecil {
 
 		readonly internal bool write_symbols;
 
-		public MetadataBuilder (ModuleDefinition module, string fq_name, ISymbolWriterProvider symbol_writer_provider, ISymbolWriter symbol_writer)
+		public MetadataBuilder (ModuleDefinition module, string fq_name, ISymbolWriterProvider symbol_writer_provider, ISymbolWriter symbol_writer, bool deterministic = false)
 		{
 			this.module = module;
 			this.text_map = CreateTextMap ();
 			this.fq_name = fq_name;
-			this.time_stamp = (uint) DateTime.UtcNow.Subtract (new DateTime (1970, 1, 1)).TotalSeconds;
+
+			if (deterministic && module.HasImage) {
+				this.time_stamp = module.Image.TimeDateStamp;
+			}
+			else {
+				this.time_stamp = (uint)DateTime.UtcNow.Subtract (new DateTime (1970, 1, 1)).TotalSeconds;
+			}
+
 			this.symbol_writer_provider = symbol_writer_provider;
 
 			if (symbol_writer == null && module.HasImage && module.Image.HasDebugTables ()) {
