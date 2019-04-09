@@ -144,8 +144,7 @@ namespace Mono.Cecil {
 		public MethodReference (string name, TypeReference returnType)
 			: base (name)
 		{
-			if (returnType == null)
-				throw new ArgumentNullException ("returnType");
+			Mixin.CheckType (returnType, Mixin.Argument.returnType);
 
 			this.return_type = new MethodReturnType (this);
 			this.return_type.ReturnType = returnType;
@@ -155,8 +154,7 @@ namespace Mono.Cecil {
 		public MethodReference (string name, TypeReference returnType, TypeReference declaringType)
 			: this (name, returnType)
 		{
-			if (declaringType == null)
-				throw new ArgumentNullException ("declaringType");
+			Mixin.CheckType (declaringType, Mixin.Argument.declaringType);
 
 			this.DeclaringType = declaringType;
 		}
@@ -185,7 +183,7 @@ namespace Mono.Cecil {
 
 		public static bool IsVarArg (this IMethodSignature self)
 		{
-			return (self.CallingConvention & MethodCallingConvention.VarArg) != 0;
+			return self.CallingConvention == MethodCallingConvention.VarArg;
 		}
 
 		public static int GetSentinelPosition (this IMethodSignature self)

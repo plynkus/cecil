@@ -11,11 +11,14 @@
 using System;
 using System.IO;
 
-#if !READ_ONLY
-
 namespace Mono.Cecil.PE {
 
 	class BinaryStreamWriter : BinaryWriter {
+
+		public int Position {
+			get { return (int) BaseStream.Position; }
+			set { BaseStream.Position = value; }
+		}
 
 		public BinaryStreamWriter (Stream stream)
 			: base (stream)
@@ -72,7 +75,15 @@ namespace Mono.Cecil.PE {
 		{
 			BaseStream.Seek (bytes, SeekOrigin.Current);
 		}
+
+		public void Align (int align)
+		{
+			align--;
+			var position = Position;
+			var bytes = ((position + align) & ~align) - position;
+
+			for (int i = 0; i < bytes; i++)
+				WriteByte (0);
+		}
 	}
 }
-
-#endif

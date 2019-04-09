@@ -8,13 +8,10 @@
 //
 
 using System;
-using System.Diagnostics.SymbolStore;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 
 using Mono.Cecil.Cil;
-
-#if !READ_ONLY
 
 namespace Mono.Cecil.Pdb {
 
@@ -29,8 +26,8 @@ namespace Mono.Cecil.Pdb {
 			[In] ref Guid languageVendor,
 			[In] ref Guid documentType,
 			[Out, MarshalAs (UnmanagedType.Interface)] out ISymUnmanagedDocumentWriter pRetVal);
-		void SetUserEntryPoint ([In] SymbolToken method);
-		void OpenMethod ([In] SymbolToken method);
+		void SetUserEntryPoint ([In] int methodToken);
+		void OpenMethod ([In] int methodToken);
 		void CloseMethod ();
 		void OpenScope ([In] int startOffset, [Out] out int pRetVal);
 		void CloseScope ([In] int endOffset);
@@ -40,7 +37,7 @@ namespace Mono.Cecil.Pdb {
 		void DefineField_Placeholder ();
 		void DefineGlobalVariable_Placeholder ();
 		void Close ();
-		void SetSymAttribute_Placeholder ();
+		void SetSymAttribute (uint parent, string name, uint data, IntPtr signature);
 		void OpenNamespace ([In, MarshalAs (UnmanagedType.LPWStr)] string name);
 		void CloseNamespace ();
 		void UsingNamespace ([In, MarshalAs (UnmanagedType.LPWStr)] string fullName);
@@ -71,14 +68,19 @@ namespace Mono.Cecil.Pdb {
 		void DefineLocalVariable2 (
 			[In, MarshalAs (UnmanagedType.LPWStr)] string name,
 			[In] int attributes,
-			[In] SymbolToken sigToken,
+			[In] int sigToken,
 			[In] int addrKind,
 			[In] int addr1,
 			[In] int addr2,
 			[In] int addr3,
 			[In] int startOffset,
 			[In] int endOffset);
+
+		void DefineGlobalVariable2_Placeholder ();
+
+		void DefineConstant2 (
+			[In, MarshalAs (UnmanagedType.LPWStr)] string name,
+			[In, MarshalAs (UnmanagedType.Struct)] object variant,
+			[In] int sigToken);
 	}
 }
-
-#endif

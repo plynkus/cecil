@@ -21,15 +21,15 @@ namespace Mono.Cecil.Tests {
 			TestCSharp ("CustomAttributes.cs", module => {
 				var hamster = module.GetType ("Hamster");
 
-			    Assert.IsTrue (hamster.HasCustomAttributes);
-			    Assert.AreEqual (1, hamster.CustomAttributes.Count);
+				Assert.IsTrue (hamster.HasCustomAttributes);
+				Assert.AreEqual (1, hamster.CustomAttributes.Count);
 
-			    var attribute = hamster.CustomAttributes [0];
-			    Assert.AreEqual ("System.Void FooAttribute::.ctor(System.String)",
-				    attribute.Constructor.FullName);
+				var attribute = hamster.CustomAttributes [0];
+				Assert.AreEqual ("System.Void FooAttribute::.ctor(System.String)",
+					attribute.Constructor.FullName);
 
-			    Assert.IsTrue (attribute.HasConstructorArguments);
-			    Assert.AreEqual (1, attribute.ConstructorArguments.Count);
+				Assert.IsTrue (attribute.HasConstructorArguments);
+				Assert.AreEqual (1, attribute.ConstructorArguments.Count);
 
 				AssertArgument ("bar", attribute.ConstructorArguments [0]);
 			});
@@ -437,7 +437,7 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void InterfaceImplementation ()
 		{
-			IgnoreOnMono();
+			OnlyOnWindows (); // Mono's ilasm doesn't support .interfaceimpl
 
 			TestIL ("ca-iface-impl.il", module => {
 				var type = module.GetType ("FooType");
@@ -446,6 +446,50 @@ namespace Mono.Cecil.Tests {
 				var attributes = iface.CustomAttributes;
 				Assert.AreEqual (1, attributes.Count);
 				Assert.AreEqual ("FooAttribute", attributes [0].AttributeType.FullName);
+			});
+		}
+
+		[Test]
+		public void NullCharInString ()
+		{
+			TestCSharp ("CustomAttributes.cs", module => {
+				var type = module.GetType ("NullCharInString");
+				var attributes = type.CustomAttributes;
+				Assert.AreEqual (1, attributes.Count);
+				var attribute = attributes [0];
+				Assert.AreEqual (1, attribute.ConstructorArguments.Count);
+				var value = (string) attribute.ConstructorArguments [0].Value;
+				Assert.AreEqual (8, value.Length);
+				Assert.AreEqual ('\0', value [7]);
+			});
+		}
+
+		[Test]
+		public void OrderedAttributes ()
+		{
+			TestModule ("ordered-attrs.exe", module => {
+				var type = module.GetType ("Program");
+				var method = type.GetMethod ("Main");
+				var attributes = method.CustomAttributes;
+				Assert.AreEqual (6, attributes.Count);
+
+				Assert.AreEqual ("AAttribute", attributes [0].AttributeType.Name);
+				Assert.AreEqual ("Main.A1", attributes [0].Fields [0].Argument.Value as string);
+
+				Assert.AreEqual ("AAttribute", attributes [1].AttributeType.Name);
+				Assert.AreEqual ("Main.A2", attributes [1].Fields [0].Argument.Value as string);
+
+				Assert.AreEqual ("BAttribute", attributes [2].AttributeType.Name);
+				Assert.AreEqual ("Main.B1", attributes [2].Fields [0].Argument.Value as string);
+
+				Assert.AreEqual ("AAttribute", attributes [3].AttributeType.Name);
+				Assert.AreEqual ("Main.A3", attributes [3].Fields [0].Argument.Value as string);
+
+				Assert.AreEqual ("BAttribute", attributes [4].AttributeType.Name);
+				Assert.AreEqual ("Main.B2", attributes [4].Fields [0].Argument.Value as string);
+
+				Assert.AreEqual ("BAttribute", attributes [5].AttributeType.Name);
+				Assert.AreEqual ("Main.B3", attributes [5].Fields [0].Argument.Value as string);
 			});
 		}
 
@@ -558,10 +602,10 @@ namespace Mono.Cecil.Tests {
 			}
 
 			switch (Type.GetTypeCode (value.GetType ())) {
-			case TypeCode.String:
+			case System.TypeCode.String:
 				signature.AppendFormat ("\"{0}\"", value);
 				break;
-			case TypeCode.Char:
+			case System.TypeCode.Char:
 				signature.AppendFormat ("'{0}'", (char) value);
 				break;
 			default:

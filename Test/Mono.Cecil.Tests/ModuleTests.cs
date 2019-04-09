@@ -47,7 +47,9 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void MultiModules ()
 		{
-			TestModule ("mma.exe", module => {
+			IgnoreOnCoreClr ();
+
+			TestModule("mma.exe", module => {
 				var assembly = module.Assembly;
 
 				Assert.AreEqual (3, assembly.Modules.Count);
@@ -155,6 +157,8 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void ExportedTypeFromNetModule ()
 		{
+			IgnoreOnCoreClr ();
+
 			TestModule ("mma.exe", module => {
 				Assert.IsTrue (module.HasExportedTypes);
 				Assert.AreEqual (2, module.ExportedTypes.Count);
@@ -181,14 +185,14 @@ namespace Mono.Cecil.Tests {
 				var exported_type = module.ExportedTypes [0];
 
 				Assert.AreEqual ("System.Diagnostics.DebuggableAttribute", exported_type.FullName);
-				Assert.AreEqual ("mscorlib", exported_type.Scope.Name);
+				Assert.AreEqual (Platform.OnCoreClr ? "System.Private.CoreLib" : "mscorlib", exported_type.Scope.Name);
 				Assert.IsTrue (exported_type.IsForwarder);
 
 				var nested_exported_type = module.ExportedTypes [1];
 
 				Assert.AreEqual ("System.Diagnostics.DebuggableAttribute/DebuggingModes", nested_exported_type.FullName);
 				Assert.AreEqual (exported_type, nested_exported_type.DeclaringType);
-				Assert.AreEqual ("mscorlib", nested_exported_type.Scope.Name);
+				Assert.AreEqual (Platform.OnCoreClr ? "System.Private.CoreLib" : "mscorlib", nested_exported_type.Scope.Name);
 			});
 		}
 
@@ -197,7 +201,7 @@ namespace Mono.Cecil.Tests {
 		{
 			TestCSharp ("CustomAttributes.cs", module => {
 				Assert.IsTrue (module.HasTypeReference ("System.Attribute"));
-				Assert.IsTrue (module.HasTypeReference ("mscorlib", "System.Attribute"));
+				Assert.IsTrue (module.HasTypeReference (Platform.OnCoreClr ? "System.Private.CoreLib" : "mscorlib", "System.Attribute"));
 
 				Assert.IsFalse (module.HasTypeReference ("System.Core", "System.Attribute"));
 				Assert.IsFalse (module.HasTypeReference ("System.Linq.Enumerable"));
@@ -207,6 +211,8 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void Win32FileVersion ()
 		{
+			IgnoreOnCoreClr ();
+
 			TestModule ("libhello.dll", module => {
 				var version = FileVersionInfo.GetVersionInfo (module.FileName);
 
@@ -232,10 +238,9 @@ namespace Mono.Cecil.Tests {
 		}
 
 		[Test]
-		[ExpectedException (typeof (BadImageFormatException))]
 		public void OpenIrrelevantFile ()
 		{
-			GetResourceModule ("text_file.txt");
+			Assert.Throws<BadImageFormatException> (() => GetResourceModule ("text_file.txt"));
 		}
 
 		[Test]
@@ -244,6 +249,15 @@ namespace Mono.Cecil.Tests {
 			using (var module = GetResourceModule ("moda.netmodule")) {
 				var type = module.GetType ("Module.A", "Foo");
 				Assert.IsNotNull (type);
+			}
+		}
+
+		[Test]
+		public void GetNonExistentTypeRuntimeName ()
+		{
+			using (var module = GetResourceModule ("libhello.dll")) {
+				var type = module.GetType ("DoesNotExist", runtimeName: true);
+				Assert.IsNull (type);
 			}
 		}
 
@@ -264,6 +278,21 @@ namespace Mono.Cecil.Tests {
 		}
 
 		[Test]
+		public void OwnedStreamModuleFileName ()
+		{
+			var path = GetAssemblyResourcePath ("hello.exe");
+			using (var file = File.Open (path, FileMode.Open))
+			{
+				using (var module = ModuleDefinition.ReadModule (file))
+				{
+					Assert.IsNotNull (module.FileName);
+					Assert.IsNotEmpty (module.FileName);
+					Assert.AreEqual (path, module.FileName);
+				}
+			}
+		}
+
+		[Test]
 		public void ReadAndWriteFile ()
 		{
 			var path = Path.GetTempFileName ();
@@ -279,6 +308,21 @@ namespace Mono.Cecil.Tests {
 
 			using (var module = ModuleDefinition.ReadModule (path))
 				Assert.AreEqual ("Foo.Foo", module.Types [1].FullName);
+		}
+
+		[Test]
+		public void ExceptionInWriteDoesNotKeepLockOnFile ()
+		{
+			var path = Path.GetTempFileName ();
+
+			var module = ModuleDefinition.CreateModule ("FooFoo", ModuleKind.Dll);
+			// Mixed mode module that Cecil can not write
+			module.Attributes = (ModuleAttributes) 0;
+
+			Assert.Throws<NotSupportedException>(() => module.Write (path));
+
+			// Ensure you can still delete the file
+			File.Delete (path);
 		}
 	}
 }

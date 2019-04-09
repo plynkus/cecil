@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using SR = System.Reflection;
 using System.Runtime.CompilerServices;
@@ -155,6 +154,9 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void ImportGenericField ()
 		{
+			if (Platform.OnCoreClr)
+				return;
+
 			var get_field = Compile<Func<Generic<string>, string>> ((module, body) => {
 				var il = body.GetILProcessor ();
 				il.Emit (OpCodes.Ldarg_0);
@@ -172,6 +174,9 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void ImportGenericMethod ()
 		{
+			if (Platform.OnCoreClr)
+				return;
+
 			var generic_identity = Compile<Func<Generic<int>, int, int>> ((module, body) => {
 				var il = body.GetILProcessor ();
 				il.Emit (OpCodes.Ldarg_0);
@@ -186,6 +191,9 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void ImportGenericMethodSpec ()
 		{
+			if (Platform.OnCoreClr)
+				return;
+
 			var gen_spec_id = Compile<Func<Generic<string>, int, int>> ((module, body) => {
 				var il = body.GetILProcessor ();
 				il.Emit (OpCodes.Ldarg_0);
@@ -201,6 +209,9 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void ImportComplexGenericMethodSpec ()
 		{
+			if (Platform.OnCoreClr)
+				return;
+
 			var gen_spec_id = Compile<Func<Generic<string>, int, int>> ((module, body) => {
 				var il = body.GetILProcessor ();
 				il.Emit (OpCodes.Ldarg_0);
@@ -278,6 +289,9 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void ImportGenericFieldFromContext ()
 		{
+			if (Platform.OnCoreClr)
+				return;
+
 			var list_foo = typeof (Foo<>).GetField ("list").FieldType;
 			var generic_list_foo_open = typeof (Generic<>).MakeGenericType (list_foo);
 			var generic_list_foo_open_field = generic_list_foo_open.GetField ("Field");
@@ -294,6 +308,9 @@ namespace Mono.Cecil.Tests {
 		[Test]
 		public void ImportGenericMethodFromContext ()
 		{
+			if (Platform.OnCoreClr)
+				return;
+
 			var list_foo = typeof (Foo<>).GetField ("list").FieldType;
 			var generic_list_foo_open = typeof (Generic<>).MakeGenericType (list_foo);
 			var generic_list_foo_open_method = generic_list_foo_open.GetMethod ("Method");
@@ -333,11 +350,10 @@ namespace Mono.Cecil.Tests {
 
 		delegate void Emitter (ModuleDefinition module, MethodBody body);
 
-		[MethodImpl (MethodImplOptions.NoInlining)]
-		static TDelegate Compile<TDelegate> (Emitter emitter)
+		static TDelegate Compile<TDelegate> (Emitter emitter, [CallerMemberName] string testMethodName = null)
 			where TDelegate : class
 		{
-			var name = GetTestCaseName ();
+			var name = "ImportReflection_" + testMethodName;
 
 			var module = CreateTestModule<TDelegate> (name, emitter);
 			var assembly = LoadTestModule (module);
@@ -407,15 +423,6 @@ namespace Mono.Cecil.Tests {
 		static ModuleDefinition CreateModule (string name)
 		{
 			return ModuleDefinition.CreateModule (name, ModuleKind.Dll);
-		}
-
-		[MethodImpl (MethodImplOptions.NoInlining)]
-		static string GetTestCaseName ()
-		{
-			var stack_trace = new StackTrace ();
-			var stack_frame = stack_trace.GetFrame (2);
-
-			return "ImportReflection_" + stack_frame.GetMethod ().Name;
 		}
 	}
 }

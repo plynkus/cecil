@@ -111,7 +111,7 @@ namespace Mono.Cecil.Rocks {
 					id.Append (((GenericParameter) type).Position);
 					break;
 				case MetadataType.OptionalModifier:
-					WriteModiferTypeSignature ((RequiredModifierType) type, '!');
+					WriteModiferTypeSignature ((OptionalModifierType) type, '!');
 					break;
 				case MetadataType.RequiredModifier:
 					WriteModiferTypeSignature ((RequiredModifierType) type, '|');
@@ -222,7 +222,7 @@ namespace Mono.Cecil.Rocks {
 
 		void WriteItemName (string name)
 		{
-			id.Append (name.Replace ('.', '#'));
+			id.Append (name.Replace ('.', '#').Replace('<', '{').Replace('>', '}'));
 		}
 
 		public override string ToString ()

@@ -100,8 +100,6 @@ namespace Mono.Cecil {
 			for (int i = 0; i < modules.Count; i++)
 				modules [i].Dispose ();
 		}
-
-#if !READ_ONLY
 		public static AssemblyDefinition CreateAssembly (AssemblyNameDefinition assemblyName, string moduleName, ModuleKind kind)
 		{
 			return CreateAssembly (assemblyName, moduleName, new ModuleParameters { Kind = kind });
@@ -122,9 +120,7 @@ namespace Mono.Cecil {
 
 			return assembly;
 		}
-#endif
 
-#if !PCL
 		public static AssemblyDefinition ReadAssembly (string fileName)
 		{
 			return ReadAssembly (ModuleDefinition.ReadModule (fileName));
@@ -134,7 +130,6 @@ namespace Mono.Cecil {
 		{
 			return ReadAssembly (ModuleDefinition.ReadModule (fileName, parameters));
 		}
-#endif
 
 		public static AssemblyDefinition ReadAssembly (Stream stream)
 		{
@@ -155,9 +150,6 @@ namespace Mono.Cecil {
 			return assembly;
 		}
 
-#if !READ_ONLY
-
-#if !PCL
 		public void Write (string fileName)
 		{
 			Write (fileName, new WriterParameters ());
@@ -167,7 +159,6 @@ namespace Mono.Cecil {
 		{
 			main_module.Write (fileName, parameters);
 		}
-#endif
 
 		public void Write ()
 		{
@@ -188,7 +179,6 @@ namespace Mono.Cecil {
 		{
 			main_module.Write (stream, parameters);
 		}
-#endif
 
 		public override string ToString ()
 		{
